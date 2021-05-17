@@ -8,6 +8,7 @@
 
 | 主题 | 发布时间 |
 | ---- | ---- |
+| [有人发现PHP-7.3后内存占用变大了吗](./_/zend-hash-load-factor.md) | 2021-05-17 |
 | [漫谈PHP8新特性：命名参数](./_/php8-rfc-named-params.md) | 2020-07-17 |
 | [漫谈Swoole协程与异步IO](./_/swoole-coroutine-and-async-io.md) | 2020-06-12 |
 | [使用Swoole协程一键代理PHP-FPM服务](./_/swoole-fpm-proxy.md) | 2020-04-17 |
