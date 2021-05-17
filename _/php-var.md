@@ -21,12 +21,12 @@ tags: [php, zval]
 
 早期的PHP还在写模板的时候，`$`也为程序员带来了很多好处，如直接在字符串内嵌入变量，甚至很多人并不知道它配合花括号还可以这样：
 
-```
+```php
 $o = new class {
-    public function greet(string $name): string
-    {
-        return "Hello {$name}!";
-    }
+    public function greet(string $name): string
+    {
+        return "Hello {$name}!";
+    }
 };
 echo "{$o->greet('PHP')}";
 ```
@@ -37,7 +37,7 @@ Hello PHP!
 ```
 或是可变变量
 
-```
+```php
 $foo = 'bar';
 $$foo = 'char';
 var_dump($bar);
@@ -68,11 +68,11 @@ string(4) "char"
 
 知道了这些以后，我们可以肯定地推测，PHP变量和其它静态语言变量的存储方式是不同的。如我们在C语言中声明一个字符串：
 
-```
+```C
 const char *string = "hello";
 ```
 那么显而易见这个字符串占用了6个字节的内存（字符串长度 + \0终止符），这一点你可以用sizeof来验证。
-```
+```C
 printf("%zu", sizeof("hello")); // 输出6
 ```
 >注：PHP中的sizeof是count的别名，和占用内存并没有关系
@@ -81,28 +81,28 @@ printf("%zu", sizeof("hello")); // 输出6
 
 如果你有一点C语言基础，那么你应该知道结构体、联合体和一些数据类型，我们可以来看看PHP变量在C底层的结构定义（因为是Zend引擎实现，所以被称作zval）：
 
-```
+```C
 struct zval {
-  /* 值 （8字节）*/
+  /* 值 （8字节）*/
   union {
-    zend_long        lval; // 对应int类型
-    double           dval; // 对应float类型
-    zend_string      *str; // 对应string类型
-    zend_array       *arr; // 对应array类型
-    zend_object      *obj; // 对应object类型
-    zend_resource    *res; // 对应resource类型
-    zend_reference   *ref; // 对应引用类型
+    zend_long        lval; // 对应int类型
+    double           dval; // 对应float类型
+    zend_string      *str; // 对应string类型
+    zend_array       *arr; // 对应array类型
+    zend_object      *obj; // 对应object类型
+    zend_resource    *res; // 对应resource类型
+    zend_reference   *ref; // 对应引用类型
   } value;
 
-  /* 类型信息 (4字节) */
-  struct {
-    zend_uchar    type;    // 存储了变量的类型，以找到对应的value
-    zend_uchar    type_flags; // 内存管理使用，可忽略
-    uint16_t      extra;
+  /* 类型信息 (4字节) */
+  struct {
+    zend_uchar    type;    // 存储了变量的类型，以找到对应的value
+    zend_uchar    type_flags; // 内存管理使用，可忽略
+    uint16_t      extra;
   } type_info;
 
-  /* 额外信息 (4字节，内存对齐冗余) */
-  uint32_t      extra;
+  /* 额外信息 (4字节，内存对齐冗余) */
+  uint32_t      extra;
 };
 ```
 这就是PHP的一个变量在底层的内存布局，这里过滤了一些暂时用不到的信息，简化了它的结构，看起来更加清晰，总的来说有三个部分：**值、类型、额外信息**，构成了PHP变量的容器"zval"。
@@ -114,12 +114,12 @@ struct zval {
 
 而我们所谈论的字符串，即zend_string的结构体又长这样，包含了三个固定属性：**引用计数信息、哈希值、长度**，在64位系统上一共是24个字节（refcount是4字节的，但是对齐到了8字节），而value的长度是根据字符串长度动态确定的：
 
-```
+```C
 struct zend_string {
-  uint32_t          refcount; // 引用计数，表示这个字符串被引用了几次
-  zend_ulong        hash;     // 哈希缓存，在字符串对比时能够极大提高速度
-  size_t            length;   // 字符串长度，确保了字符串的二进制安全
-  char              value[length];  // 字符串内容，此处表示它的内存和这个结构体的内存是连续的
+  uint32_t          refcount; // 引用计数，表示这个字符串被引用了几次
+  zend_ulong        hash;     // 哈希缓存，在字符串对比时能够极大提高速度
+  size_t            length;   // 字符串长度，确保了字符串的二进制安全
+  char              value[length];  // 字符串内容，此处表示它的内存和这个结构体的内存是连续的
 };
 ```
 已知PHP的字符串也是zero-termination（零结尾）的，那么我们可以推测出，一个字符串变量，就需要占用 “zval + zend_string + 字符串长度 + 1” 这么多的字节，以“hello”来计算就是46个字节（可能还需要内存对齐），而不是C语言中明明白白简简单单的6个字节。
@@ -132,7 +132,7 @@ struct zend_string {
 
 首先我们来看一个例子：
 
-```
+```php
 $a = 'hello';
 $b = $a;
 ```
@@ -159,7 +159,7 @@ $b = $a;
 
 如果我们修改了`$b`的字符串值呢？
 
-```
+```php
 $b .= ' world'; // hello world
 ```
 那么此时就会发生写时复制，也叫**写时分离**，即`$a`和`$b`不再指向同一个zend_string，这时候会创建一个真正的zend_string的副本给`$b`，而原来zend_string的引用计数减为1。
@@ -183,7 +183,7 @@ PHP中常见的拥有引用计数的类型有：string、array、object，它们
 
 ## PHP数字变量的值拷贝
 
-```
+```php
 $a = 1;
 $b = $a;
 ```
@@ -217,13 +217,13 @@ resource类型（资源）也是一样，略有不同的就是，资源都是向
 
 由于写时拷贝的存在和PHP的一些优化措施，引用变量显得有些鸡肋，我们通常也不建议使用引用，让我们来看两个例子：
 
-```
+```php
 function foo(string $a): string
 {
-    return $a . 'bar';
+    return $a . 'bar';
 }
 ```
-```
+```php
 function foo(string &$a)
 {
     $a .= 'bar';
@@ -239,12 +239,12 @@ function foo(string &$a)
 
 但引用肯定也有用武之地，那么什么时候我们才该使用引用呢？
 
-```
+```php
 foreach ($array as &$value) {
-    $value += 1;
+    $value += 1;
 }
 foreach ($array as $index => $value) {
-    $array[$index] += 1;
+    $array[$index] += 1;
  }
 ```
 如果你尝试拿一个大的**关联数组**做一下性能测试，就可以发现第一种的情况的运行速度优于第二种，为什么非得是关联数组呢？因为第二种方式每次增加键值时，都会多一次哈希查找的步骤。但如果不是关联数组，又有什么区别呢？这里有个新的知识点，我们留到后续数组的章节再来讨论。
@@ -254,19 +254,19 @@ foreach ($array as $index => $value) {
 
 当我们已经初步了解了上述知识以后，我们就可以来思考这样一个问题，如果一个变量自己引用了自己，那么会发生什么？
 
-```
+```php
 $foo = [];
 $foo[] = &$foo;
 var_dump($foo);
 ```
 输出
-```
+```php
 array(1) {
-  [0]=>
-  &array(1) {
-    [0]=>
-    *RECURSION*
-  }
+  [0]=>
+  &array(1) {
+    [0]=>
+    *RECURSION*
+  }
 }
 ```
 可以由RECURSION看出来foo变量循环引用了自身，如果无限制递归地打印，将会变成死循环输出。
@@ -290,7 +290,7 @@ PHP底层定义了一系列convert方法来进行这样的转换，convert系列
 
 类似PHP这样的动态类型语言还有一个通病就是不方便解决整数溢出问题，PHP的int型是有符号整数，比无符号的范围要小很多，大部分语言的解决方法就是在溢出时将数值转换成浮点型，PHP也是这么做的：
 
-```
+```php
 $foo = PHP_INT_MAX;
 var_dump($foo); // 输出 int(9223372036854775807)
 $foo++;
@@ -308,7 +308,7 @@ var_dump($foo); // 输出 float(0) 出现丢失
 但很多开发者并没有注意到, PHP中还存在着使用松散比较的函数，如最常用的"in_array"，需要设定第三个参数为true，甚至最基础的switch语句使用的也是松散比较，稍不注意，就会陷入变量松散比较的陷阱中。
 
 >以下返回结果都是true，你所忽视的变量松散比较正在破坏着你的程序逻辑
-```
+```php
 var_dump(in_array('foo', [0]));
 var_dump(in_array(0, ['bar']));
 var_dump(in_array(null, [[]]));
@@ -322,7 +322,7 @@ var_dump(in_array(null, [[]]));
 
 除此之外，"=="的语义自然是"equal"，而“===”的语义实际上是"identical"，也就是“同一的“，对于PHP的一些基本类型，如数字、字符串、数组等，两个变量的值相等即可，但对于对象类型的比较，则要求是”同一个对象“，如：
 
-```
+```php
 var_dump(new stdClass === new stdClass);
 ```
 这个例子中虽然两个对象别无二致，但由于不是同一个对象，将会返回false。
