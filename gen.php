@@ -1,4 +1,5 @@
 <?php
+define('IS_IMAGEOPTIM_AVAILABLE', str_contains(`imageoptim --help`, 'Usage'));
 $articles = json_decode(file_get_contents(__DIR__ . '/../twose.github.io/db.json'), true)['models']['Post'];
 $articles = (function ($array, $key) {
     $keys = [];
@@ -22,6 +23,9 @@ foreach ($articles as $article) {
                     continue;
                 }
                 file_put_contents($imageAbsolutePath, $imageContent);
+                if (IS_IMAGEOPTIM_AVAILABLE) {
+                    passthru("imageoptim {$imageAbsolutePath}");
+                }
                 echo 'Done' . PHP_EOL;
             }
             $article['raw'] = str_replace($imageUri, $imagePath, $article['raw']); // use local image
