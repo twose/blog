@@ -15,7 +15,7 @@ tags: [swoole, coroutine, async]
 
 对于Swoole这样的有栈协程，你完全可以简单地将其看做是一个栈切换器，你可以在运行的子程序中随意切换到另一个子程序，底层会保存好被切走的协程的执行位置，回来时可以从原先的位置继续往下运行。
 
-![coroutine.jpg](https://i.loli.net/2021/05/17/oinSItwgVBhubyK.jpg)
+![coroutine.png](images/swoole-coroutine-and-async-io-0.png)
 <center>Swoole多进程模型下的进程、线程、协程关系图</center>
 
 
@@ -38,7 +38,7 @@ tags: [swoole, coroutine, async]
 
 在实际使用中，「伪异步」的Reactor模型并不比Windows下IOCP的Proactor逊色，并且我更喜欢Reactor的可控性，当然为了追求极致的性能和解决网络和文件异步IO统一的问题，未来Linux的io_uring可能会成为新的趋势。
 
-![event_wait.jpg](https://i.loli.net/2021/05/17/GO9S61tWwxVdays.jpg)
+![event_wait.png](images/swoole-coroutine-and-async-io-1.png)
 
 <center>Reactor运行流程简图</center>
 
@@ -127,7 +127,7 @@ Swoole\Coroutine\run(function() {
 
 由于开发者的强烈要求，Swoole官方曾经做了一个错误的决定，就是在Task进程中支持协程和异步IO。
 
-![task.png](https://i.loli.net/2021/05/17/e9VMSchiN3Tr6ag.jpg)
+![task.png](images/swoole-coroutine-and-async-io-2.png)
 
 正如图中所示，Task进程最初被设计为用来处理无法异步化的任务，充当类似于PHP-FPM的角色（半异步半同步模型），这样各司其职，能够将执行效率最大化。
 

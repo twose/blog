@@ -21,7 +21,19 @@ MYSQL报错注入个人认为大体可以分为以下几类：
 
 这里可以看到mysql是怎么处理整形的：[Integer Types (Exact Value)](https://dev.mysql.com/doc/refman/5.5/en/integer-types.html)，如下表：
 
-![img](https://edu.aqniu.com/files/default/2017/03-08/142134e6bab6545212.jpg)
+| Type      | Storage | Minimum Value        | Maximum Value        |
+| --------- | ------- | -------------------- | -------------------- |
+|           | (Bytes) | (Signed/Unsigned)    | (Signed/Unsigned)    |
+| TINYINT   | 1       | -128                 | 127                  |
+|           |         | 0                    | 255                  |
+| SMALLINT  | 2       | -32768               | 32767                |
+|           |         | 0                    | 65535                |
+| MEDIUMINT | 3       | -8388608             | 8388607              |
+|           |         | 0                    | 16777215             |
+| INT       | 4       | -2147483648          | 2147483647           |
+|           |         | 0                    | 4294967295           |
+| BIGINT    | 8       | -9223372036854775808 | 9223372036854775807  |
+|           |         | 0                    | 18446744073709551615 |
 
 在mysql5.5之前，整形溢出是不会报错的，根据官方文档说明[out-of-range-and-overflow](https://dev.mysql.com/doc/refman/5.5/en/out-of-range-and-overflow.html)，只有版本号大于5.5.5时，才会报错。试着对最大数做加法运算，可以看到报错的具体情况：
 

@@ -30,7 +30,7 @@ Task进程是Swoole异步服务器中专门设计用来执行同步阻塞程序�
 
 > 我们需要大量的task进程来处理少量的同步阻塞任务，但只需要少量的Worker就可以处理大量的异步非阻塞任务，这就是多路IO复用技术带来的好处
 
-![task.png](https://i.loli.net/2021/05/17/kFUa5CoD9tE6dPR.jpg)
+![task.png](images/swoole-fpm-proxy-0.png)
 
 虽然这样看起来已经非常方便了，但还是有一些不足，如：很多项目不单是同步阻塞，还只能运行在PHP-FPM语境下；此外，如果是协程服务器或是自己用socket写的服务器，就无法使用task功能。那么这时候协程版本的FastCGI就可以一展身手了。
 
@@ -118,7 +118,7 @@ use 1.0145659446716 s
 
 或是你有一个很老的PHP-FPM项目饱受性能困扰又因积重难返而无法快速重构，我们还是可以借助它来更平滑地将旧业务迁移到新的异步/协程服务器中。
 
-![fpm.png](https://i.loli.net/2021/05/17/V3woTOEbIdNz1sn.jpg)
+![fpm.png](images/swoole-fpm-proxy-1.png)
 
 
 
@@ -164,7 +164,7 @@ $server->start();
 
 > 图示为本地已搭建好的WordPress站点
 
-![wordpress.png](https://i.loli.net/2021/05/17/omdC7Jj6tcqliLh.jpg)
+![wordpress.png](images/swoole-fpm-proxy-2.png)
 
 
 
@@ -178,7 +178,7 @@ $server->start();
 
 即使FastCGI客户端是纯PHP编写的，压测性能和nginx仍在一个量级，这也证明了PHP的性能瓶颈并不总是在于PHP代码本身，很多时候是由于同步阻塞的IO模型导致的。
 
-![bing.png](https://i.loli.net/2021/05/17/hklfDHqGP4nUiYm.png)
+![bing.png](images/swoole-fpm-proxy-3.png)
 
 目前PHP编写的组件在Swoole中的占比还不高，未来我们希望能引入更多的PHP编写的内部组件来解决功能性的需求，而只有PHP难以满足的一些高性能的需求（如各种复杂协议的处理）才考虑使用C++实现。
 
